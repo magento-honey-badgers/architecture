@@ -1,10 +1,12 @@
 type ConfigurableProduct {
     variants: [ConfigurableVariant] @deprecated(reason: "Use configurable_options_selection_metadata instead.") @doc(description: "An array of variants of products") @resolver(class: "Magento\\ConfigurableProductGraphQl\\Model\\Resolver\\ConfigurableVariant")
     configurable_options: [ConfigurableProductOptions] @deprecated(reason: "Use configurable_options_selection_metadata instead.") @doc(description: "An array of linked simple product items") @resolver(class: "Magento\\ConfigurableProductGraphQl\\Model\\Resolver\\Options")
-    configurable_options_selection_metadata(selectedConfigurableOptionValues: [ID!]): ConfigurableOptionsSelectionMetadata @doc(description: "Metadata for the specified configurable options selection")
+    configurable_options_v2(configurableOptionValuesUids: [ID!]): ConfigurableOptionsV2 @doc(description: "Metadata for the specified configurable options selection")
 }
 
-type ConfigurableOptionsSelectionMetadata @doc(description: "Metadata corresponding to the configurable options selection.")
+# configurable_options_v2 returns all of the options selection if no option value uids are passed. The output contains enough data to display the options. If display out of stock is set to no, we don’t return out of stock options and value for is_available is always true. If display out of stock is set to yes, we return all of the options and value is_available depends on availability. Then when user selects the option(s), we can use them to filter what is available to selection.
+
+type ConfigurableOptionsV2 @doc(description: "Metadata corresponding to the configurable options selection.")
 {
     options: [ConfigurableOption!] @doc(description: "Configurable options available for further selection based on current selection.")
     media_gallery: [MediaGalleryInterface!] @doc(description: "Product images and videos corresponding to the specified configurable options selection.")
@@ -12,11 +14,15 @@ type ConfigurableOptionsSelectionMetadata @doc(description: "Metadata correspond
 
 #media_gallery always contain images of one product: if no options provided - images of configurable, of options provided - one of the simple products
 
+interface MediaGalleryInterface @doc(description: "Contains basic information about a product image or video.") @typeResolver(class: "Magento\\CatalogGraphQl\\Model\\MediaGalleryTypeResolver") {
+    disabled: Boolean @deprecated(reason: "Not used on the storefront.") @doc(description: "Whether the image is hidden from view.")
+}
+
 type ConfigurableOption @doc(description: "Configurable option available for further selection based on current selection.") {
     option_value_uids: [ID!]! @doc(description: "Configurable option values available for further selection.")
     option_values: [ConfigurableOptionValue]!
     attribute_code: String! @doc(description: "Attribute code that uniquely identifies configurable option.")
-    is_available_for_selection: Boolean!
+    is_available: Boolean!
 }
 
 type ConfigurableOptionValue {
